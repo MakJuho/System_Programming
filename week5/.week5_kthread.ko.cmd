@@ -1,0 +1,1 @@
+cmd_/home/juho/System_Programming/week5/week5_kthread.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000 -T ./scripts/module-common.lds  --build-id  -o /home/juho/System_Programming/week5/week5_kthread.ko /home/juho/System_Programming/week5/week5_kthread.o /home/juho/System_Programming/week5/week5_kthread.mod.o ;  true

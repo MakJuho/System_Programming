@@ -1,0 +1,364 @@
+. 123 EOF 입력한다.
+. 1이 A레지스터에 들어오고 2를 받아, 그러면 1에 10을 곱하고 더해
+. 스페이스바를 받으면 레지스터 초기화
+MAIN	LDA		1000
+
+
+INPUT	CLEAR	A
+		RD		STDIN		 . 입력받기		
+		
+		COMP	SPACE		. 스페이스바
+		JEQ		STOREARY		
+		
+		COMP	#57
+		JGT		CHECK_EOF1			. 숫자 9보다 크다면
+		
+		COMP	#48
+		JLT		CHECK_EOF1			. 숫자 0보다 작으면
+
+		STA		TEMP3				. 자리수 5개 이하
+		LDA		INPUT_ARY_COUNT
+		ADD		#1
+		
+		COMP	#5
+		JGT		ERROR				. 5보다 크면 ERROR
+
+		STA		INPUT_ARY_COUNT
+		LDA		TEMP3
+		
+
+		SUB		FORTYEIGHT
+		STA		TEMP2
+		LDA		TOTAL
+		MUL		#10
+		ADD		TEMP2
+		STA		TOTAL
+		J		INPUT
+
+PRE_PRINT	CLEAR	X
+			LDA		PRINT_COUNT		. COUNT Ary의 index
+			MUL		#3
+			RMO		A,X
+			DIV		#3
+			COMP	CHECK_COUNT
+			JEQ		PRE_SORTING2
+			
+			CLEAR	A
+			LDA		INPUT_ARY,X		.12345
+			STA		PRINT_TEMP
+			
+			LDA		PRINT_COUNT
+			ADD		#1
+			STA		PRINT_COUNT
+			
+			LDA		PRINT_TEMP
+
+			J		PRE_PRINT1
+
+PRE_PRINT1	COMP	#10
+			JLT		PRINT
+			
+			DIV		#10
+			
+			RMO		A,S
+			LDA		PRINT_X		. 자리수 카운트
+			ADD		#1
+			STA		PRINT_X
+			STA		PRINT_X2
+			RMO		S,A
+
+			COMP	#9		
+			JGT		PRE_PRINT1
+			
+			COMP	#0
+			JLT		ERROR
+			
+
+			ADD		#48
+			TD		STDOUT
+			WD		STDOUT	
+			J		FETCH_PRINT_TEMP
+
+PRINT		ADD		#48
+			TD		STDOUT
+			WD		STDOUT
+			CLEAR	A
+			ADD		#32
+			WD		STDOUT
+			J		PRE_PRINT
+
+PRE_PRINT2	LDA		PRINT_X2
+			SUB		#1
+			STA		PRINT_X2
+			LDA		PRINT_TEMP
+			SUBR	S,A				.12345-10000
+			
+			STA		PRINT_TEMP
+			LDA		PRINT_TEMP
+			J		PRE_PRINT1
+			
+
+
+FETCH_PRINT_TEMP	LDA		PRINT_X
+					COMP	#0
+					JEQ		PRE_PRINT2
+					SUB		#1
+					STA		PRINT_X
+					RMO		S,A
+					MUL		#10
+					RMO		A,S
+					J		FETCH_PRINT_TEMP
+					
+		
+.PRINT	CLEAR	X
+.		TD		STDOUT		. STDOUT디바이스 테스트, 결과값은 CC에 저장된다.
+.		JEQ		PRINT		. (CC와 관계없이) A레지스터와 같다면 PC에 PRINT를 넣음
+.		.ARRAY에서 값 출력
+.		
+.
+.		WD		STDOUT		. A 레지스터의 값을 내보내는 역할
+.		LDA		#14
+.		WD		STDOUT
+.		LDA		#10
+.		WD		STDOUT
+		
+	
+
+CHECK_EOF1	STCH	EOF_TEMP,X		.E									
+			COMP	#69
+			JEQ		CHECK_EOF2
+			J		ERROR
+
+CHECK_EOF2	RMO		X,A
+			ADD		#1
+			RMO		A,X
+			RD		STDIN
+			STCH	EOF_TEMP,X		.O
+			COMP	#79
+			JEQ		CHECK_EOF3
+			J		ERROR
+
+CHECK_EOF3	RMO		X,A
+			ADD		#1
+			RMO		A,X
+			RD		STDIN
+			STCH	EOF_TEMP,X		.F
+			JEQ		SORTING
+			J		ERROR
+					
+	
+	
+
+ERROR		CLEAR	A
+			TD		STDOUT
+			
+			.LDA		#14
+			.WD		STDOUT
+			.LDA		#10
+			.WD		STDOUT
+
+			CLEAR	A
+
+			ADD		#69
+			WD		STDOUT
+			ADD		#13
+			WD		STDOUT
+			WD		STDOUT
+			SUB		#3
+			WD		STDOUT
+			ADD		#3
+			WD		STDOUT
+			LDA		#14
+			WD		STDOUT
+			LDA		#10
+			WD		STDOUT
+			J		EMPTY
+
+PRE_SORTING	CLEAR	A
+			.LDA		PRINT_COUNT
+			.SUB		#1
+			.STA		END_CONDITION		
+			LDA		ITERATION
+			.COMP	END_CONDITION
+			.JEQ		EMPTY
+			
+			STA		CURRENT_POS
+			LDA		#4000
+			STA		LEAST_VALUE
+			
+			J		SORTING
+
+PRE_SORTING2	TD		STDOUT
+				LDA		#14
+				WD		STDOUT
+				LDA		#10
+				WD		STDOUT
+				J		PRE_SORTING
+				
+
+SORTING		CLEAR	A
+			LDA		CURRENT_POS
+			
+			COMP	CHECK_COUNT	.34
+			JEQ		ALTER
+
+		
+			MUL		#3
+			RMO		A,X		
+			
+			.COMP	CHECK_COUNT	. 배열 5개 다 되면 출력
+			.JEQ	PRINT
+			
+			LDA		INPUT_ARY,X	.12
+			COMP	LEAST_VALUE
+			JLT		STORE_LEAST_VALUE
+
+		
+			LDA		CURRENT_POS
+			ADD		#1		
+			STA		CURRENT_POS
+			J		SORTING
+
+STORE_LEAST_VALUE	STA		LEAST_VALUE
+					RMO		X,A
+					STA		CHANGE_X2
+					LDA		CURRENT_POS
+					ADD		#1		
+					STA		CURRENT_POS
+					J		SORTING
+
+
+ALTER		
+			LDA		CHECK_COUNT
+			SUB		#1
+			STA		END_CONDITION		
+			LDA		ITERATION
+			COMP	END_CONDITION
+			JEQ		EMPTY
+
+
+
+			MUL		#3
+			RMO		A,X			.0
+			LDA		INPUT_ARY,X
+
+			STA		TEMP_VALUE	.123
+
+			LDA		CHANGE_X2	.6
+			RMO		A,X
+			LDA		INPUT_ARY,X
+			
+			STA		TEMP_VALUE2	.20
+			LDA		ITERATION	.0
+			MUL		#3
+			RMO		A,X
+			
+
+			
+			LDA		TEMP_VALUE2	.20
+			STA		INPUT_ARY,X	.20
+
+			LDA		CHANGE_X2	.0
+			RMO		A,X
+			
+			LDA		TEMP_VALUE	.123
+			STA		INPUT_ARY,X	
+
+			LDA		ITERATION
+			ADD		#1
+			STA		ITERATION
+			
+			CLEAR	A
+			STA		PRINT_COUNT
+
+			LDA		TEMP_VALUE
+			COMP	TEMP_VALUE2
+			JEQ		PRE_SORTING
+
+			J		PRE_PRINT		
+			.LDA		LEAST_VALUE,X
+			.STA		TEMP_VALUE
+			
+			.LDA		INPUT_ARY
+			.STA		LEAST_VALUE
+			.J		SORTING
+			
+
+STOREARY	LDA		#0
+			STA		INPUT_ARY_COUNT
+			
+			LDX		CHECK_COUNT
+			LDA		#3
+			RMO		A, T
+			MULR	T, X
+			
+			LDA		TOTAL
+			STA		INPUT_ARY,X
+			RMO		X, A
+			DIV		#3
+			
+			ADD		#1
+			STA		CHECK_COUNT
+			
+			.TOTAL 메모리 초기화
+			CLEAR	A
+			.LDA		#0
+			
+			STA		TOTAL
+
+			J		INPUT
+
+		.LDA		#1		. A 레지스터에 1을 부름
+		.LDT		JUHO	. 저장했던 WORD 1에 있는 값 3 부름
+		.ADDR		A,T		. A+T = T에 저장
+		.RMO		T,A		. T에 저장된 값을 A로 불러옴
+
+EMPTY	CLEAR	X
+		J		EMPTY
+		
+
+INPUT_ARY		RESW	8
+INPUT_ARY_COUNT	WORD	0
+EOF_ARY			RESB	3
+ZERO	WORD	0
+END_CONDITION	WORD	0
+
+HEX2DEC	WORD	3
+
+STDIN	BYTE	0
+STDOUT	BYTE	1
+
+ENTER	WORD	10
+SPACE	WORD	32  . WORD는 숫자, BYTE는 문자
+
+CURRENT_X	WORD	0
+PRINT_X2	WORD	0
+PRINT_X	WORD	0
+PRINT_TEMP	WORD	0
+
+THREE	WORD	3
+EIGHT	WORD	8
+FORTYEIGHT WORD	48
+
+DIFF	WORD	48
+TOTAL	RESW	3
+TEMP2	RESW	3
+TEMP3	WORD	1
+CHECK_COUNT	RESW	1
+
+TEMP_VALUE		WORD	0
+TEMP_VALUE2		WORD	0
+LEAST_VALUE		WORD	100000
+CURRENT_POS		WORD	0
+ITERATION		WORD	0
+CHANGE_X1		WORD	0
+CHANGE_X2		WORD	0
+
+ALPHA_E	BYTE	C'E'
+EOF		BYTE	C'EOF'
+EOF_TEMP	RESB	3
+COMPARE_TEMP	BYTE	1
+PRINT_COUNT		WORD	0
+
+
+ERR		BYTE	C'ERROR'
